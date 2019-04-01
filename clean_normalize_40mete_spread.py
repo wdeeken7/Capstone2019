@@ -36,8 +36,10 @@ for key, value in inputLayersPaths.items():
     #QgsMapLayerRegistry.instance().addMapLayer(mem_layer)
 #Cleaning Code. Here, the method is to keep track of all feature id's whose yield is outside the range of mean +/- 3(Std Dev). This loops through the ORIGINAL layer, appends the "bad" feature id to an array.
 arrayOfArraysToCleanIDs = dict()
+arrayOfArraysToCleanIDs2 = dict()
 for key, value in inputLayerCopies.items():
     arrayOfArraysToCleanIDs[key] = [1]
+    arrayOfArraysToCleanIDs2[key] = [1]
 
     
 for key, value in inputLayerCopies.items() :
@@ -78,14 +80,37 @@ for key, value in inputLayerCopies.items() :
     upperBound = mean + (3 * stdDev) 
     lowerBound = mean - (3 * stdDev)
     feats = inputLayerCopies[key].getFeatures()
+    curLayer = inputLayerCopies[key]
+    #Code to for "spreading" out outlier yield to the previous 30 data points.
+    #This code should be placed within the "cleaning" section of the previous method, so that inputLayerCopies array is made available to the code below.
+    #The upper and lower bounds of the yield should have already been declared, by upperBound and lowerBound, respectively.
     for feat in feats:
-       featYield = feat.attribute("Yld_Vol_Dr")
-       if featYield < lowerBound or featYield > upperBound :
-          arrayOfArraysToCleanIDs[key].append(feat.id()) 
+        featYield = feat.attribute("Yld_Vol_Dr")
+        if  featYield > upperBound :
+            arrayOfArraysToCleanIDs[key].append(feat.id())
+        elif featYield < lowerBound:
+            arrayOfArraysToCleanIDs2[key].append(feat.id())
     inputLayerCopies[key].startEditing()
     for id in arrayOfArraysToCleanIDs[key]:
         
-        inputLayerCopies[key].deleteFeature(id)
+        yieldToAdd = 0
+        if id < 30 :
+            yieldToAdd = (((curLayer.getFeature(id))["Yld_Vol_Dr"]) - upperBound) / id
+        else :
+            yieldToAdd = (((curLayer.getFeature(id))["Yld_Vol_Dr"]) - upperBound) / 30 
+        	
+        j = 1
+        while j < 31 and j < id:
+            
+            curLayer.getFeature( id - j )['Yld_Vol_Dr'] = (curLayer.getFeature(id - j))['Yld_Vol_Dr'] + yieldToAdd
+            curLayer.updateFeature(curLayer.getFeature(id - j))
+            j = j + 1
+        (curLayer.getFeature(id))["Yld_Vol_Dr"] = upperBound
+        curLayer.updateFeature(curLayer.getFeature(id))
+    
+#deletes lower outliers.
+    for id in arrayOfArraysToCleanIDs2[key] :
+        curLayer.deleteFeature(id)
     inputLayerCopies[key].commitChanges()
 #Build grid layer. Loops through all layers, finding the max/min x/y of all the layers. After finding these max/mins, we define the extents of the grid layer. Grid layer here is 
 max_x = 0
@@ -119,7 +144,7 @@ print("Min Y: " + str(min_y))
 #Motivation behind choosing only one layer: Elevation should not change year-to-year.
 extentString = str(min_x - 20) + ',' + str(max_x + 20) + ',' + str(min_y - 20) + ',' + str(max_y + 20) + '[EPSG:26914]'
 print(extentString)
-processing.run("qgis:creategrid", {'TYPE':2,'EXTENT': extentString,'HSPACING':20,'VSPACING':20,'HOVERLAY':0,'VOVERLAY':0,'CRS':QgsCoordinateReferenceSystem('EPSG:26914'),'OUTPUT': finalGriddedFolder + '/gridLayer.gpkg'})
+processing.run("qgis:creategrid", {'TYPE':2,'EXTENT': extentString,'HSPACING':40,'VSPACING':40,'HOVERLAY':0,'VOVERLAY':0,'CRS':QgsCoordinateReferenceSystem('EPSG:26914'),'OUTPUT': finalGriddedFolder + '/gridLayer.gpkg'})
 greatestKey = 0
 flag = True
 for key, value in inputLayerCopies.items() :
@@ -406,11 +431,9 @@ for key, value in inputLayerCopies.items() :
 stringOfLayerPaths = ""
 flag = True
 if( len(inputLayerCopies) != 0 ):
-    #tempFolder = 'C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/CleanedNormalizedGrid/TEMP'
     for key, value in inputLayerCopies.items():
         if flag :
             stringOfLayerPaths = tempFolder + "/JOINED_STATS_WITH_ELE" + key + ".gpkg"
-            flag = False
         
         else :
             stringOfLayerPaths = stringOfLayerPaths + " , " + tempFolder + "/JOINED_STATS_WTIH_ELE" + key + ".gpkg"
@@ -432,12 +455,8 @@ if( len(inputLayerCopies) != 0 ):
             curLayer.startEditing()
             i = curLayer.dataProvider().fieldNameIndex('fid_2')
             curLayer.deleteAttribute(i)
-        
+        elif field.name() == "id" :
+            curLayer.startEditing()
+            i = curLayer.dataProvider().fieldNameIndex('id')
+            curLayer.deleteAttribute(i)
         update(curLayer)
-        
-            
-
-    
-    
-    
-        

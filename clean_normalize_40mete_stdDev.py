@@ -119,7 +119,7 @@ print("Min Y: " + str(min_y))
 #Motivation behind choosing only one layer: Elevation should not change year-to-year.
 extentString = str(min_x - 20) + ',' + str(max_x + 20) + ',' + str(min_y - 20) + ',' + str(max_y + 20) + '[EPSG:26914]'
 print(extentString)
-processing.run("qgis:creategrid", {'TYPE':2,'EXTENT': extentString,'HSPACING':20,'VSPACING':20,'HOVERLAY':0,'VOVERLAY':0,'CRS':QgsCoordinateReferenceSystem('EPSG:26914'),'OUTPUT': finalGriddedFolder + '/gridLayer.gpkg'})
+processing.run("qgis:creategrid", {'TYPE':2,'EXTENT': extentString,'HSPACING':40,'VSPACING':40,'HOVERLAY':0,'VOVERLAY':0,'CRS':QgsCoordinateReferenceSystem('EPSG:26914'),'OUTPUT': finalGriddedFolder + '/gridLayer.gpkg'})
 greatestKey = 0
 flag = True
 for key, value in inputLayerCopies.items() :
@@ -406,11 +406,9 @@ for key, value in inputLayerCopies.items() :
 stringOfLayerPaths = ""
 flag = True
 if( len(inputLayerCopies) != 0 ):
-    #tempFolder = 'C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/CleanedNormalizedGrid/TEMP'
     for key, value in inputLayerCopies.items():
         if flag :
             stringOfLayerPaths = tempFolder + "/JOINED_STATS_WITH_ELE" + key + ".gpkg"
-            flag = False
         
         else :
             stringOfLayerPaths = stringOfLayerPaths + " , " + tempFolder + "/JOINED_STATS_WTIH_ELE" + key + ".gpkg"
@@ -432,7 +430,10 @@ if( len(inputLayerCopies) != 0 ):
             curLayer.startEditing()
             i = curLayer.dataProvider().fieldNameIndex('fid_2')
             curLayer.deleteAttribute(i)
-        
+        elif field.name() == "id" :
+            curLayer.startEditing()
+            i = curLayer.dataProvider().fieldNameIndex('id')
+            curLayer.deleteAttribute(i)
         update(curLayer)
         
             
