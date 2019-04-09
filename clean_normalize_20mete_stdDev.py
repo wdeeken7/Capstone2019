@@ -3,18 +3,18 @@ import processing
 from qgis.PyQt.QtCore import QVariant
 #Define input layers to clean, normalize, and grid. Every layer's shapefile path must be defined in this dictionary, with its year as string as its key.
 inputLayersPaths = dict()
-inputLayersPaths["2018"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2018_WilsonField/Wilson 2018 Corn Harvest sec 18.shp"
-inputLayersPaths["2017"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2017_SoybeanHarvest/2017 soybean harvest yield map.shp"
-inputLayersPaths["2016"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2016_WilsonField/wilson field 2016 SY18sh02 18-138-64.shp"
-inputLayersPaths["2015"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2015_WilsonField/wilson field 2015 SY18sh02 18-138-64.shp"
-inputLayersPaths["2014"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2014_WilsonField/WilsonField2014/wilson field 2014 SY18sh02 18-138-64.shp"
-inputLayersPaths["2013"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2013_CornYield/2013 Corn yield data.shp"
-inputLayersPaths["2010"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2010_Corn/2010_Corn INT6385_1.shp"
-inputLayersPaths["2009"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2009_CowpeaRedRip/2009_CowpeaRedRip_1.shp"
-inputLayersPaths["2008"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2008_HRSW/2008_HRSW 08 Glenn_1.shp"
-inputLayersPaths["2006"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2006_SOYBEANS/2006_SOYBEANS_1.shp"
-inputLayersPaths["2005"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2005_HRSW Norpro/2005_HRSW Norpro_1.shp"
-inputLayersPaths["2004"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2004_Soy 90B51/2004_Soy 90B51_1.shp"
+#inputLayersPaths["2018"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2018_WilsonField/Wilson 2018 Corn Harvest sec 18.shp"
+#inputLayersPaths["2017"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2017_SoybeanHarvest/2017 soybean harvest yield map.shp"
+#inputLayersPaths["2016"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2016_WilsonField/wilson field 2016 SY18sh02 18-138-64.shp"
+#inputLayersPaths["2015"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2015_WilsonField/wilson field 2015 SY18sh02 18-138-64.shp"
+#inputLayersPaths["2014"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2014_WilsonField/WilsonField2014/wilson field 2014 SY18sh02 18-138-64.shp"
+#inputLayersPaths["2013"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2013_CornYield/2013 Corn yield data.shp"
+#inputLayersPaths["2010"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2010_Corn/2010_Corn INT6385_1.shp"
+#inputLayersPaths["2009"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2009_CowpeaRedRip/2009_CowpeaRedRip_1.shp"
+#inputLayersPaths["2008"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2008_HRSW/2008_HRSW 08 Glenn_1.shp"
+#inputLayersPaths["2006"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2006_SOYBEANS/2006_SOYBEANS_1.shp"
+#inputLayersPaths["2005"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2005_HRSW Norpro/2005_HRSW Norpro_1.shp"
+#inputLayersPaths["2004"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2004_Soy 90B51/2004_Soy 90B51_1.shp"
 inputLayersPaths["2003"] = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/ProjectData2/location/2003_SOYBEANS/forMap/2003_SOYBEANS_1.shp"
 #This is the path of your folder to store temporary reprojected layers as well as the newly-created grid layer.
 tempLayerFolderPath = "C:/Users/wdeek/Documents/Spring 2019/PersonalQGISProject/CleanedNormalizedGrid/NEW_PROJECTION"
@@ -172,6 +172,21 @@ for key, value in inputLayerCopies.items():
 #Now, perform intersection of grid with each normalized layer. Each intersection operation saves the intersected layer in the tempPath folder.     
 for key, value in inputLayerCopies.items():
     processing.run("native:intersection", {'INPUT':tempLayerFolderPath + '/NEWPROJ' + key + '.shp','OVERLAY': finalGriddedFolder + '/gridLayerWithEle.gpkg','INPUT_FIELDS':[],'OVERLAY_FIELDS':[],'OUTPUT': tempFolder + '/INTERSECT' + key + '.shp'})
+    #After running intersection, the empty grid squares are disposed of and the indices are redone. This throws off the geospatial significance of the indices. The following code adds each lost grid square feature.
+    originalGrid = QgsVectorLayer(finalGriddedFolder + '/gridLayerWithEle.gpkg', 'grid', 'ogr')
+    originalGridFeatures = originalGrid.getFeatures()
+    currentIntersectedLayerToFix = QgsVectorLayer(tempFolder + '/INTERSECT' + key + '.shp', 'toFix', 'ogr')
+    for feat in originalGridFeatures:
+        curGridFeatID = feat['id']
+        request = QgsFeatureRequest().setFilterExpression ( u'"id" = \'' + key + '\'' )
+        featuresWithGridBoxID = currentIntersectedLayerToFix.getFeatures(request)
+        if featuresWithGridBoxID.close() : 
+            currentIntersectedLayerToFix.startEditing()
+            lostFeatAdded = currentIntersectedLayerToFix.addFeature(feat)
+            currentIntersectedLayerToFix.commitChanges()
+            print("Feature with ID: " + str(curGridFeatID) + " restored: " + str(lostFeatAdded))
+            
+            
 #Run statistics on each of the intersection layers
 for key, value in inputLayerCopies.items():
     #Stats on Normed_DrYldVol
