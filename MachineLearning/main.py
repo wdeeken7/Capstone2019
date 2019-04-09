@@ -17,3 +17,4 @@ try:
     print("Workspace configuration succeeded. Skip the workspace creation steps below")
 except:
     print("Workspace not accessible. Change your parameters or create a new workspace below")
+#The remainder of this doc should run the models defined in other documents. 
