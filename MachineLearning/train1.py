@@ -1,23 +1,24 @@
 from azureml.core import Workspace
+import azureml.train
 import azureml.dataprep as dprep
 from azureml.train.automl import AutoMLConfig
-#### This doc defines a linear regression model ####
-
-automl_settings = {
-    "iteration_timeout_minutes" : 10,
-    "iterations" : 30,
-    "primary_metric" : 'spearman_correlation',
-    "preprocess" : True,
-    "verbosity" : logging.INFO,
-    "n_cross_validations": 5
-}
-automated_ml_config = AutoMLConfig(task = 'regression',
-                             debug_log = 'automated_ml_errors.log',
-                             path = project_folder,
-                             X = x_train.values,
-                             y = y_train.values.flatten(),
-                             **automl_settings)
-
+#### This doc defines the bare model. Parameters are passed to it and it returns a mlConfig object. ####
+def simpleRegression(x_train, y_train, logFolder, iterationTimeoutMinutes, iterationsToDo, primaryMetric, nCrossValidations, modelType):
+    automl_settings = {
+        "iteration_timeout_minutes" : iterationTimeoutMinutes,
+        "iterations" : iterationsToDo
+        "primary_metric" : primaryMetric
+        "preprocess" : True,
+        "verbosity" : logging.INFO,
+        "n_cross_validations": nCrossValidations
+    }
+    automated_ml_config = AutoMLConfig(task = modelType,
+                                debug_log = 'automated_ml_errors.log',
+                                path = logFolder,
+                                X = x_train.values,
+                                y = y_train.values.flatten(),
+                                **automl_settings)
+    return automated_ml_config
 
 
 

@@ -18,3 +18,6 @@ try:
 except:
     print("Workspace not accessible. Change your parameters or create a new workspace below")
 #The remainder of this doc should run the models defined in other documents. 
+#This experiment runs the REGRESSION model.
+experiment = Experiment(ws, "Regression_Attempt_1")
+local_run = experiment.submit(automated_ml_config, show_output=True)
