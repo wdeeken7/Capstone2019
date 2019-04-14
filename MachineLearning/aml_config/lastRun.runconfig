@@ -1,4 +1,4 @@
-script: train1.py
+script: main.py
 arguments: []
 target: local
 framework: Python
