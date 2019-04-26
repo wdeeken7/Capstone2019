@@ -11,7 +11,7 @@ def prepareDataForMLTraining(testSize, dataset_root, shouldShuffle):
     dataFlow = dprep.auto_read_file(dataset_root, False)
 
     #Defines the input (X) columns and the output-to-predict (Y) columns from the .csv file.
-    dataflow_X = dataFlow.keep_columns(['Soil_Name','MEAN_Eleva', 'V.A.T(F)','R.A.T(F)', 'M.A.T(F)', 'V.PET(inch)','R.PET(inch)', 'M.PET(inch)', 'V.T.R(inch)', 'R.T.R(inch)' ])
+    dataflow_X = dataFlow.keep_columns(['Crop-Type', 'V.A.T(F)','R.A.T(F)', 'M.A.T(F)', 'V.PET(inch)','R.PET(inch)', 'M.PET(inch)', 'V.T.R(inch)', 'R.T.R(inch)' ])
     dataflow_Y = dataFlow.keep_columns('NormalizedYield')
 
     #Converts data into a pandas DataFrame to ease in splitting data into Train/Test sets.
