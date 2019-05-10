@@ -1,23 +1,25 @@
 from azureml.core import Experiment
-from azureml.core import Workspace
-
+from azureml.core import *
+from retrieve import *
 from azureml.core.runconfig import RunConfiguration
 from dataPrep import *
 from train1 import *
 import csv
-testSize = .75
+import pandas as pd
 #This must be changed for your specific file location.
-dataset_root = "C:\\Users\\wdeek\\Documents\\Spring 2019\\williamCapstone\\cuformodel.csv"
+dataset_root = "C:\\Users\\wdeek\\Desktop\\ML Service\\cumodelwo2014.csv"
 #Path to write file with predicted values.
 to_predict_array = dict()
-to_predict_array["Bad_year_corn"] = "PATH1"
-to_predict_array["Good_year_corn"] = "PATH2"
-
-predicted_values_folder = "PATH3"
-
+to_predict_array["2014"] ="C:\\Users\\wdeek\\Desktop\\ML Service\\test2014.csv" 
+#to_predict_array["Good_year_corn"] = "PATH2"
+#toPredict = "C:\\Users\\wdeek\\Documents\\Spring 2019\\williamCapstone\\testingScenario.csv"
+predicted_values_folder = "C:\\Users\\wdeek\\Documents\\Spring 2019\\williamCapstone"
 shouldShuffle = True
-#preppedData is a tuple containing (x_toTrain, x_toTest, y_toTrain, y_toTest) 
-preppedData = prepareDataForMLTraining(testSize, dataset_root, shouldShuffle)
+#preppedData is a tuple containing (x_df, y_df)
+preppedData = pd.read_csv(dataset_root)
+X_toTrain = preppedData.filter(items = ['cell-ID','Soil_Name','MEAN_Eleva','Crop-Type'])
+Y_toTrain = preppedData.filter(items = ['NormalizedYield'])
+
 def main():
     print("Beginning ML runs")
     #### This doc should contain meta-data for ML experiment runs ####
@@ -34,27 +36,26 @@ def main():
 
     #The remainder of this doc should run the models defined in other documents. 
     #This experiment runs the REGRESSION model.
-    experiment = Experiment(ws, "Regression_Attempt_1")
-    automated_ml_config = model(preppedData[0], preppedData[2], "FOLDER HARD CODED", 10, 2, 'normalized_mean_absolute_error', 5, 'regression')
+    experiment = Experiment(ws, "RunFinal1")
+    automated_ml_config = model(X_toTrain, Y_toTrain, "FOLDER HARD CODED", 10, 30, 'normalized_root_mean_squared_error', 5, 'regression')
     local_run = experiment.submit(automated_ml_config, show_output=True)
-    #### Here is where testing code should go. ########
-    #The following code finds the best model. Then runs a predict and prints.
-    def retrieveBestAndPredict():
-        best_run, fitted_model = local_run.get_output()
-        print(best_run)
-        print(fitted_model)
-        for key, value in to_predict_array:
-            y_predict = fitted_model.predict(value)
-            #Now, will create and write to a .csv file with filepath defined above.
-            with open(predicted_values_folder + "//" + key , mode='w') as csv_file:
-                filewriter = csv.writer(csv_file, delimiter=',',
-                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                filewriter.writerow(['ID', 'Normed_Dry_Yld_Vol'])
-                index = 1
-                for gridBox in y_predict:
-                    filewriter.writerow([index, str(gridBox)])
-                    index = index + 1
-    retrieveBestAndPredict()
+    ####Code to explore runs####
+    def retrieveRunData():
+        children = list(local_run.get_children())
+        metricslist = {}
+        for run in children:
+            properties = run.get_properties()
+            metrics = {k: v for k, v in run.get_metrics().items() if isinstance(v, float)}
+            metricslist[int(properties['iteration'])] = metrics
+
+        rundata = pd.DataFrame(metricslist).sort_index(1)
+        print(rundata)
+    retrieveRunData()
+    #The following method retrieves the best test run's model, and makes a prediction using the previously defined .csv file.
+    for toPredict in to_predict_array:
+        retrieveAndPredict('normalized_root_mean_squared_error', 'runFinal1', toPredict, predicted_values_folder)
+    
+
     
 
 if __name__ == '__main__':
